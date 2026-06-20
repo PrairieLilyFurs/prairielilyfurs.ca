@@ -1,5 +1,7 @@
 ---
-const {data} = Astro.props;
+import type { IEvent } from "./EventList.astro";
+const { data } = Astro.props as { data: IEvent };
+const Content = data.Content;
 ---
 <section>
     <header>
@@ -12,5 +14,5 @@ const {data} = Astro.props;
         })}
     </time>
     </header>
-    {data.description && <p>{data.description}</p>}
+    {Content && <Content />}
 </section>

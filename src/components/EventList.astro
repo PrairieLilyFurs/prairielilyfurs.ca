@@ -1,5 +1,6 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
+import type { RenderResult } from 'astro:content';
 import { isToday, isBefore, isAfter, startOfDay, endOfDay } from 'date-fns'
 import collect, { Collection } from "collect.js";
 import EventGroup from "./EventGroup.astro";
@@ -8,25 +9,26 @@ export interface IEvent {
   id: string,
   title: string,
   date: Date,
-  description?: string,
-  hasArticle: boolean,
+  Content: RenderResult['Content'],
 }
 
 const now = new Date()
-const eventsCollection = collect(await getCollection("events"))
-  .map((event): IEvent => {
-    const [exerpt, article] = (event.body ?? '')
-      .split('----')
-      .map(fragment => fragment.trim());
 
+const rawEvents = await getCollection("events");
+
+const mappedEvents = await Promise.all(
+  rawEvents.map(async (event): Promise<IEvent> => {
+    const { Content } = await render(event);
     return {
       id: event.id,
       title: event.data.title,
       date: new Date(event.data.date),
-      description: exerpt,
-      hasArticle: Boolean(article)
-    }
-  });
+      Content,
+    };
+  })
+);
+
+const eventsCollection = collect(mappedEvents);
   
 const current = eventsCollection
   .filter(e => isToday(e.date))
